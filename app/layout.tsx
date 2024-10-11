@@ -18,19 +18,26 @@ export default function RootLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('appConfig');
-    if (savedConfig) {
-      const config = JSON.parse(savedConfig);
-      document.documentElement.style.setProperty('--primary', config.colorPrimario);
-      document.documentElement.style.setProperty('--secondary', config.colorSecundario);
+    if (typeof window !== 'undefined') {
+      const savedConfig = localStorage.getItem('appConfig');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        if (config?.colorPrimario && config?.colorSecundario) {
+          document.documentElement.style.setProperty('--primary', config.colorPrimario);
+          document.documentElement.style.setProperty('--secondary', config.colorSecundario);
+        }
+      }
     }
   }, []);
+
+  const excludedPaths = ['/', '/login', '/register'];
+  const shouldShowNavbar = !excludedPaths.includes(pathname);
 
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {pathname !== '/' && pathname !== '/login' && pathname !== '/register' && <Navbar />}
+          {shouldShowNavbar && <Navbar />}
           <main className="container mx-auto mt-4 px-4">
             {children}
           </main>
