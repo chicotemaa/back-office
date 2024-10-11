@@ -5,7 +5,7 @@ import { Menu, X, User, Calendar, Package, BarChart2, Settings, FileText, PenToo
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { auth } from '@/lib/firebase';
-import { signOut, User as FirebaseUser } from 'firebase/auth'; // Importa el tipo User de Firebase
+import { signOut, User as FirebaseUser } from 'firebase/auth'; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,10 +18,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 
+// Define un tipo para la configuración
+interface Config {
+  logo?: string;
+  nombreNegocio?: string;
+}
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [config, setConfig] = useState(null);
-  const [user, setUser] = useState<FirebaseUser | null>(null); // El estado puede ser de tipo FirebaseUser o null
+  const [config, setConfig] = useState<Config | null>(null); // Ahora `config` tiene el tipo `Config | null`
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -30,11 +36,11 @@ const Navbar = () => {
   useEffect(() => {
     const savedConfig = localStorage.getItem('appConfig');
     if (savedConfig) {
-      setConfig(JSON.parse(savedConfig));
+      setConfig(JSON.parse(savedConfig) as Config); // Tipado explícito para `Config`
     }
 
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser); // Ahora puede aceptar valores de tipo FirebaseUser o null
+      setUser(currentUser); 
     });
 
     return () => unsubscribe();
