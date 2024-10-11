@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -7,7 +5,7 @@ import { Menu, X, User, Calendar, Package, BarChart2, Settings, FileText, PenToo
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, User as FirebaseUser } from 'firebase/auth'; // Importa el tipo User de Firebase
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null); // Ajuste en el tipo de estado
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -36,7 +34,7 @@ const Navbar = () => {
     }
 
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
+      setUser(currentUser); // Ahora puede aceptar valores de tipo FirebaseUser o null
     });
 
     return () => unsubscribe();
@@ -118,7 +116,7 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.photoURL} alt={user?.displayName} />
+                    <AvatarImage src={user?.photoURL ?? undefined} alt={user?.displayName ?? undefined} />
                     <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                 </Button>
