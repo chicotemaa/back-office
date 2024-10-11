@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth'; // Importa el tipo User
 import { auth } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
@@ -26,13 +26,13 @@ const dummyData = {
 };
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null); // Especifica que puede ser null o User
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        setUser(currentUser);
+        setUser(currentUser); // Firebase User type is valid here
       } else {
         router.push('/login');
       }
