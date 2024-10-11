@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState(null);
-  const [user, setUser] = useState<FirebaseUser | null>(null); // Ajuste en el tipo de estado
+  const [user, setUser] = useState<FirebaseUser | null>(null); // El estado puede ser de tipo FirebaseUser o null
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
