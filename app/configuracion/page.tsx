@@ -19,9 +19,10 @@ export default function ConfiguracionPage() {
     telefono: '123-456-7890',
     colorPrimario: '#000000',
     colorSecundario: '#ffffff',
-    logo: null,
+    logo: null as string | ArrayBuffer | null,
   });
-  const [logoPreview, setLogoPreview] = useState(null);
+  
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const router = useRouter();
@@ -39,22 +40,23 @@ export default function ConfiguracionPage() {
     }
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setConfiguracion(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleLogoChange = (e) => {
-    const file = e.target.files[0];
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setConfiguracion(prev => ({ ...prev, logo: reader.result }));
-        setLogoPreview(reader.result);
+        setLogoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
+  
 
   const applyChanges = async () => {
     setIsLoading(true);
