@@ -23,7 +23,6 @@ export default function StockPage() {
           <TableRow>
             <TableHead>Producto</TableHead>
             <TableHead>Cantidad</TableHead>
-            <TableHead>Estado</TableHead>
             <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -32,12 +31,6 @@ export default function StockPage() {
             <TableRow key={producto.id}>
               <TableCell>{producto.nombre}</TableCell>
               <TableCell>{producto.cantidad}</TableCell>
-              <TableCell>
-                <Progress
-                  value={(producto.cantidad / producto.maximo) * 100}
-                  className="w-[60%]"
-                />
-              </TableCell>
               <TableCell>
                 <Button variant="outline" size="sm" className="mr-2">Editar</Button>
                 <Button variant="outline" size="sm">Reponer</Button>
