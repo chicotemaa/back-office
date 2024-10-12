@@ -99,7 +99,7 @@ const Navbar: React.FC = () => {
               {config && config.logo ? (
                 <Image src={config.logo} alt="Logo" width={40} height={40} />
               ) : (
-                <span className="text-xl font-bold text-foreground">{config?.nombreNegocio || 'Estética App'}</span>
+                <span className="text-xl font-bold text-foreground">{config?.nombreNegocio || 'App Estetica'}</span>
               )}
             </div>
             <div className="hidden md:block">

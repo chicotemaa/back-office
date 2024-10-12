@@ -6,33 +6,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido de vuelta!",
+      Swal.fire({
+        title: 'Inicio de sesión exitoso',
+        text: 'Bienvenido de vuelta!',
+        icon: 'success',
+        confirmButtonText: 'OK'
       });
       router.push('/dashboard');
-    } catch (error) {
-      toast({
-        title: "Error de inicio de sesión",
-        description: "Por favor, verifica tus credenciales e intenta de nuevo.",
-        variant: "destructive",
+    } catch (error: any) {
+      let errorMessage = 'Por favor, verifica tus credenciales e intenta de nuevo.';
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Contraseña incorrecta. Intenta de nuevo.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No se encontró una cuenta con este correo.';
+      }
+
+      Swal.fire({
+        title: 'Error de inicio de sesión',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK'
       });
     } finally {
       setIsLoading(false);

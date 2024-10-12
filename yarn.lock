@@ -4297,6 +4297,11 @@ supports-preserve-symlinks-flag@^1.0.0:
   resolved "https://registry.npmjs.org/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
+sweetalert2@^11.14.2:
+  version "11.14.2"
+  resolved "https://registry.npmjs.org/sweetalert2/-/sweetalert2-11.14.2.tgz#6300b220cbfe7a527edb311bc90f5a95fc2987e7"
+  integrity sha512-ZJcnp+akKLFDdwTJkayZCMWfdEOxxchInuJ8gz/Xlx/nrdTfAM3Sb+NBbBNdqcfXn0h1CamN+VKDxjP8xbWqrg==
+
 tailwind-merge@^2.5.2:
   version "2.5.3"
   resolved "https://registry.npmjs.org/tailwind-merge/-/tailwind-merge-2.5.3.tgz#579546e14ddda24462e0303acd8798c50f5511bb"

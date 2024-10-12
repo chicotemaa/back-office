@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,6 +11,14 @@ export default function StockPage() {
     { id: 1, nombre: 'Shampoo', cantidad: 50, maximo: 100 },
     { id: 2, nombre: 'Tinte', cantidad: 20, maximo: 50 },
   ]);
+
+  // Estado para asegurarse de que el componente esté montado en el cliente
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Establecer que el componente está montado
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div>
@@ -32,13 +40,15 @@ export default function StockPage() {
             <TableRow key={producto.id}>
               <TableCell>{producto.nombre}</TableCell>
               <TableCell>{producto.cantidad}</TableCell>
-             {/**  <TableCell>
-              <Progress 
-                value={(producto.maximo > 0) ? (producto.cantidad / producto.maximo) * 100 : 0} 
-                className="w-[60%]" 
-              />
+              <TableCell>
+                {/* El componente Progress solo se renderiza cuando está montado en el cliente */}
+                {isMounted && (
+                  <Progress
+                    value={(producto.cantidad / producto.maximo) * 100}
+                    className="w-[60%]"
+                  />
+                )}
               </TableCell>
-              */}
               <TableCell>
                 <Button variant="outline" size="sm" className="mr-2">Editar</Button>
                 <Button variant="outline" size="sm">Reponer</Button>
