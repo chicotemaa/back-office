@@ -173,7 +173,7 @@ export default function StockPage() {
                 <TableCell>
                   <div className="flex items-center">
                     {producto.cantidad}
-                    <Progress value={(producto.cantidad / producto.maximo) * 100} className="w-full ml-2" />
+                    
                   </div>
                 </TableCell>
                 <TableCell>{producto.costo}</TableCell>
