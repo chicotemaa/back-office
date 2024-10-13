@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useTheme } from 'next-themes';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore'; // Firebase imports
+import { db } from '@/lib/firebase'; // Your Firebase setup
 
 export default function ConfiguracionPage() {
   const [configuracion, setConfiguracion] = useState({
@@ -28,16 +30,27 @@ export default function ConfiguracionPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Cargar la configuración desde localStorage al iniciar
-    const savedConfig = localStorage.getItem('appConfig');
-    if (savedConfig) {
-      const parsedConfig = JSON.parse(savedConfig);
-      setConfiguracion(parsedConfig);
-      if (parsedConfig.logo) {
-        setLogoPreview(parsedConfig.logo);
+  // Función para cargar la configuración desde Firebase
+  const fetchConfiguracion = async () => {
+    setIsLoading(true);
+    try {
+      const configDoc = await getDoc(doc(collection(db, 'configuraciones'), 'negocio'));
+      if (configDoc.exists()) {
+        const data:any = configDoc.data();
+        setConfiguracion(data);
+        if (data.logo) {
+          setLogoPreview(data.logo);
+        }
       }
+    } catch (error) {
+      console.error('Error al cargar la configuración:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchConfiguracion();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,16 +69,13 @@ export default function ConfiguracionPage() {
       reader.readAsDataURL(file);
     }
   };
-  
 
+  // Función para guardar la configuración en Firebase
   const applyChanges = async () => {
     setIsLoading(true);
     try {
-      // Simular una operación asíncrona
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Guardar la configuración en localStorage
-      localStorage.setItem('appConfig', JSON.stringify(configuracion));
+      // Guardar la configuración en Firebase
+      await setDoc(doc(db, 'configuraciones', 'negocio'), configuracion);
       
       // Aplicar cambios de tema
       document.documentElement.style.setProperty('--primary', configuracion.colorPrimario);
@@ -76,7 +86,6 @@ export default function ConfiguracionPage() {
         description: "Los cambios han sido aplicados correctamente.",
       });
 
-      // Forzar un refresh de la página para aplicar todos los cambios
       router.refresh();
     } catch (error) {
       toast({

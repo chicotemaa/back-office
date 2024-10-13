@@ -26,7 +26,8 @@ export default function LoginPage() {
         title: 'Inicio de sesión exitoso',
         text: 'Bienvenido de vuelta!',
         icon: 'success',
-        confirmButtonText: 'OK'
+        confirmButtonText: 'OK',
+        confirmButtonColor: 'green'
       });
       router.push('/dashboard');
     } catch (error: any) {
@@ -41,7 +42,8 @@ export default function LoginPage() {
         title: 'Error de inicio de sesión',
         text: errorMessage,
         icon: 'error',
-        confirmButtonText: 'OK'
+        confirmButtonText: 'OK',
+        confirmButtonColor: 'green'
       });
     } finally {
       setIsLoading(false);

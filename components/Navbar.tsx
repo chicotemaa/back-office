@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -35,23 +35,30 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('appConfig');
-    if (savedConfig) {
-      setConfig(JSON.parse(savedConfig));
-    }
-
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-    });
-
-    return () => unsubscribe();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      const savedConfig = localStorage.getItem('appConfig');
+      if (savedConfig) {
+        setConfig(JSON.parse(savedConfig));
+      }
+
+      const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+        setUser(currentUser);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [mounted]);
 
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: BarChart2 },
@@ -59,13 +66,14 @@ const Navbar: React.FC = () => {
     { name: 'Empleados', href: '/empleados', icon: Users },
     { name: 'Servicios', href: '/servicios', icon: PenTool },
     { name: 'Turnos', href: '/turnos', icon: Calendar },
+    { name: 'Pagos', href: '/pagos', icon: DollarSign },
     { name: 'Stock', href: '/stock', icon: Package },
-    { name: 'Flujo de Caja', href: '/cashflow', icon: DollarSign },
-    { name: 'Reportes', href: '/reportes', icon: FileText },
+    { name: 'Cashflow', href: '/cashflow', icon: DollarSign },
+    { name: 'Cajas', href: '/cajas', icon: FileText },
     { name: 'Configuración', href: '/configuracion', icon: Settings },
   ];
 
-  if (pathname === '/' || pathname === '/login' || pathname === '/register') {
+  if (!mounted || pathname === '/' || pathname === '/login' || pathname === '/register') {
     return null;
   }
 
@@ -93,8 +101,8 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-background border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+        <div className="flex items-center justify-between h-18">
+          <div className="flex items-center mt-4 mb-4">
             <div className="flex-shrink-0">
               {config && config.logo ? (
                 <Image src={config.logo} alt="Logo" width={40} height={40} />
@@ -102,22 +110,20 @@ const Navbar: React.FC = () => {
                 <span className="text-xl font-bold text-foreground">{config?.nombreNegocio || 'App Estetica'}</span>
               )}
             </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`${
-                      pathname === item.href
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                    } px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
+            <div className="hidden lg:flex flex-wrap items-center ml-10 space-x-4 w-full ">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`${
+                    pathname === item.href
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                  } px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 mt-1`}
+                >
+                  {item.name}
+                </Link>
+              ))}
             </div>
           </div>
           <div className="flex items-center">
@@ -150,7 +156,7 @@ const Navbar: React.FC = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div className="-mr-2 flex md:hidden">
+            <div className="-mr-2 flex lg:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 type="button"
@@ -171,7 +177,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {isOpen && (
-        <div className="md:hidden" id="mobile-menu">
+        <div className="lg:hidden" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navigation.map((item) => (
               <Link
