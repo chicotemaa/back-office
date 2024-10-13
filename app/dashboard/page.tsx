@@ -207,7 +207,9 @@ export default function DashboardPage() {
             <CardTitle>Turnos del día</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="max-w-xs mx-auto">
             <Calendar mode="single" className="rounded-md border" />
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>

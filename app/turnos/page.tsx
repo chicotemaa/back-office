@@ -251,43 +251,41 @@ export default function TurnosPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Gestión de Turnos</h1>
-      <Button className="mt-4 mb-4" onClick={() => setModalOpen(true)}>Agendar Turno</Button>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Calendar
-            mode="single"
-            selected={date ?? undefined}
-            onSelect={(selectedDate) => setDate(selectedDate ? new Date(selectedDate) : undefined)}
-            className="rounded-md border"
-          />
-        </div>
-        <div>
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
-            <>
-            <TurnoTable turnos={filteredTurnos} onEdit={handleEditTurno} onDelete={handleDeleteTurno} onCobrar={handleCobrarTurno} />
-            </>
-           
-          )}
-        </div>
-      </div>
-
-      {/* Modal Integrado */}
-      {modalOpen && (
-        <TurnoFormModal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          isEditing={isEditing}
-          newTurno={newTurno}
-          setNewTurno={setNewTurno}
-          clientes={clientes}
-          empleados={empleados}
-          servicios={servicios}
-          onSave={isEditing ? handleSaveChanges : handleAddTurno}
+  <h1 className="text-2xl font-bold mb-4">Gestión de Turnos</h1>
+  <Button className="mt-4 mb-4" onClick={() => setModalOpen(true)}>Agendar Turno</Button>
+    <div className="grid grid-cols-1 md:grid-cols-2 ">
+      <div className="max-w-xs mx-auto">
+        <Calendar
+          mode="single"
+          selected={date ?? undefined}
+          onSelect={(selectedDate) => setDate(selectedDate ? new Date(selectedDate) : undefined)}
+          className="rounded-md border"
         />
-      )}
+      </div>
+      <div className="flex-grow">
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <TurnoTable turnos={filteredTurnos} onEdit={handleEditTurno} onDelete={handleDeleteTurno} onCobrar={handleCobrarTurno} />
+        )}
+      </div>
     </div>
+
+  {/* Modal Integrado */}
+  {modalOpen && (
+    <TurnoFormModal
+      isOpen={modalOpen}
+      onClose={() => setModalOpen(false)}
+      isEditing={isEditing}
+      newTurno={newTurno}
+      setNewTurno={setNewTurno}
+      clientes={clientes}
+      empleados={empleados}
+      servicios={servicios}
+      onSave={isEditing ? handleSaveChanges : handleAddTurno}
+    />
+  )}
+</div>
+
   );
 }
