@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import Image from 'next/image';
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { collection, getDocs, updateDoc, doc, addDoc, deleteDoc } from "firebase/firestore";
@@ -178,7 +179,9 @@ export default function BlogPage() {
                   <TableCell>{blog.publicationDate}</TableCell>
                   <TableCell>{blog.isVisible ? "Sí" : "No"}</TableCell>
                   <TableCell>
-                    {blog.imageUrl ? <img src={blog.imageUrl} alt={blog.title} width={50} /> : "No disponible"}
+                  {blog.imageUrl ? (
+                    <Image src={blog.imageUrl} alt={blog.title} width={50} height={50} />
+                    ) : "No disponible"}
                   </TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEditBlog(blog)}>Editar</Button>
