@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, User, Calendar, Package, BarChart2, Settings, FileText, PenTool, Sun, Moon, LogOut, Users, DollarSign } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase'; // Importamos 'db' para acceder a Firebase
 import { signOut, User as FirebaseUser } from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore'; // Para obtener los datos de 'configuraciones'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,10 +20,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import { useMemo } from 'react';
+
 
 interface AppConfig {
   nombreNegocio: string;
   logo?: string;
+  colorPrimario?: string;
+  colorSecundario?: string;
 }
 
 interface NavItem {
@@ -40,6 +45,9 @@ const Navbar: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
+  const memoizedNombreNegocio = useMemo(() => {
+    return <span className="text-xl font-bold text-foreground">{config?.nombreNegocio || 'App Estetica'}</span>;
+  }, [config?.nombreNegocio]);
 
   useEffect(() => {
     setMounted(true);
@@ -47,31 +55,40 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     if (mounted) {
-      const savedConfig = localStorage.getItem('appConfig');
-      if (savedConfig) {
-        setConfig(JSON.parse(savedConfig));
-      }
-
       const unsubscribe = auth.onAuthStateChanged((currentUser) => {
         setUser(currentUser);
       });
+
+      const fetchConfig = async () => {
+        try {
+          const configSnapshot = await getDocs(collection(db, 'configuraciones'));
+          const configData = configSnapshot.docs.map((doc) => doc.data())[0]; // Obtenemos la primera configuración
+          setConfig(configData as AppConfig);
+        } catch (error) {
+          console.error("Error al obtener la configuración:", error);
+        }
+      };
+
+      fetchConfig();
 
       return () => unsubscribe();
     }
   }, [mounted]);
 
   const navigation: NavItem[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: BarChart2 },
-    { name: 'Clientes', href: '/clientes', icon: User },
-    { name: 'Empleados', href: '/empleados', icon: Users },
-    { name: 'Servicios', href: '/servicios', icon: PenTool },
-    { name: 'Turnos', href: '/turnos', icon: Calendar },
-    { name: 'Pagos', href: '/pagos', icon: DollarSign },
-    { name: 'Stock', href: '/stock', icon: Package },
-    { name: 'Cashflow', href: '/cashflow', icon: DollarSign },
-    { name: 'Cajas', href: '/cajas', icon: FileText },
-    { name: 'Configuración', href: '/configuracion', icon: Settings },
+    { name: 'Dashboard', href: '/dashboard', icon: BarChart2 }, 
+    { name: 'Clientes', href: '/clientes', icon: User },          
+    { name: 'Empleados', href: '/empleados', icon: Users },       
+    { name: 'Servicios', href: '/servicios', icon: PenTool },     
+    { name: 'Blog', href: '/blog', icon: PenTool },               
+    { name: 'Turnos', href: '/turnos', icon: Calendar },          
+    { name: 'Pagos', href: '/pagos', icon: DollarSign },          
+    { name: 'Stock', href: '/stock', icon: Package },             
+    { name: 'Cashflow', href: '/cashflow', icon: DollarSign },    
+    { name: 'Cajas', href: '/cajas', icon: FileText },            
+    { name: 'Configuración', href: '/configuracion', icon: Settings }  
   ];
+  
 
   if (!mounted || pathname === '/' || pathname === '/login' || pathname === '/register') {
     return null;
@@ -98,16 +115,18 @@ const Navbar: React.FC = () => {
     }
   };
 
+  
+
   return (
     <nav className="bg-background border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18">
           <div className="flex items-center mt-4 mb-4">
             <div className="flex-shrink-0">
-              {config && config.logo ? (
+            {config && config.logo ? (
                 <Image src={config.logo} alt="Logo" width={40} height={40} />
               ) : (
-                <span className="text-xl font-bold text-foreground">{config?.nombreNegocio || 'App Estetica'}</span>
+                memoizedNombreNegocio // Usamos el valor memoizado aquí
               )}
             </div>
             <div className="hidden lg:flex flex-wrap items-center ml-10 space-x-4 w-full ">

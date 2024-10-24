@@ -15,8 +15,19 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
+
+  // Función que se ejecuta cuando cambia la fecha
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+    console.log('Fecha seleccionada:', date);
+  };
+
   return (
     <DayPicker
+      mode="single"
+      selected={selectedDate}
+      onSelect={handleDateChange} // Asigna el manejador de cambios
       showOutsideDays={showOutsideDays}
       className={cn('p-3', className)}
       classNames={{
@@ -61,6 +72,7 @@ function Calendar({
     />
   );
 }
+
 Calendar.displayName = 'Calendar';
 
 export { Calendar };

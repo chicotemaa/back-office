@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,15 @@ import Swal from "sweetalert2";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
+// Definición de la interfaz Cliente con los nuevos campos agregados
 interface Cliente {
   id: string;
   nombre: string;
   email: string;
   telefono: string;
+  direccion?: string; // Dirección del cliente (opcional)
+  fechaNacimiento?: string; // Fecha de nacimiento (opcional)
+  nota?: string; // Nota adicional sobre el cliente (opcional)
 }
 
 export default function ClientesPage() {
@@ -24,10 +28,13 @@ export default function ClientesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newCliente, setNewCliente] = useState({
+  const [newCliente, setNewCliente] = useState<Cliente|any>({
     nombre: '',
     email: '',
     telefono: '',
+    direccion: '',
+    fechaNacimiento: '',
+    nota: ''
   });
 
   // Obtener clientes de Firebase
@@ -52,7 +59,7 @@ export default function ClientesPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewCliente((prev) => ({ ...prev, [name]: value }));
+    setNewCliente((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +165,8 @@ export default function ClientesPage() {
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Teléfono</TableHead>
+              <TableHead>Dirección</TableHead>
+              <TableHead>Fecha de Nacimiento</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -168,6 +177,8 @@ export default function ClientesPage() {
                   <TableCell>{cliente.nombre}</TableCell>
                   <TableCell>{cliente.email}</TableCell>
                   <TableCell>{cliente.telefono}</TableCell>
+                  <TableCell>{cliente.direccion || 'No disponible'}</TableCell>
+                  <TableCell>{cliente.fechaNacimiento || 'No disponible'}</TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEditCliente(cliente)}>Editar</Button>
                     <Button variant="outline" size="sm" onClick={() => handleDeleteCliente(cliente.id)}>Eliminar</Button>
@@ -176,7 +187,7 @@ export default function ClientesPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={6} className="text-center">
                   No se encontraron clientes
                 </TableCell>
               </TableRow>
@@ -216,6 +227,27 @@ export default function ClientesPage() {
                 placeholder="Teléfono"
                 name="telefono"
                 value={newCliente.telefono}
+                onChange={handleChange}
+                className="mb-2"
+              />
+              <Input
+                placeholder="Dirección"
+                name="direccion"
+                value={newCliente.direccion}
+                onChange={handleChange}
+                className="mb-2"
+              />
+              <Input
+                placeholder="Fecha de Nacimiento (DD/MM/AAAA)"
+                name="fechaNacimiento"
+                value={newCliente.fechaNacimiento}
+                onChange={handleChange}
+                className="mb-2"
+              />
+              <Input
+                placeholder="Nota"
+                name="nota"
+                value={newCliente.nota}
                 onChange={handleChange}
                 className="mb-2"
               />

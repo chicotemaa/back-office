@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -16,7 +15,7 @@ interface Transaccion {
   descripcion: string;
   monto: number;
   tipo: 'ingreso' | 'egreso';
-  cajaId: string; // Agregamos el campo para la caja
+  cajaId: string;
 }
 
 interface Caja {
@@ -46,7 +45,7 @@ export default function CashflowPage() {
             descripcion: `Ingreso por turno: ${doc.data().servicio}`,
             monto: doc.data().monto,
             tipo: 'ingreso',
-            cajaId: doc.data().cajaId || 'sin-caja', // Agregar cajaId si está disponible
+            cajaId: doc.data().cajaId || 'sin-caja',
           })) as Transaccion[];
 
         // Obtener pagos
@@ -57,7 +56,7 @@ export default function CashflowPage() {
           descripcion: `Pago a: ${doc.data().destinatario}`,
           monto: -doc.data().monto,
           tipo: 'egreso',
-          cajaId: doc.data().cajaId || 'sin-caja', // Agregar cajaId si está disponible
+          cajaId: doc.data().cajaId || 'sin-caja',
         })) as Transaccion[];
 
         // Combinar ingresos y egresos
@@ -131,6 +130,9 @@ export default function CashflowPage() {
   const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
   const sortedChartData = [...filteredTransactions].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
 
+  // Calcular el total general (ingresos - egresos)
+  const totalGeneral = filteredTransactions.reduce((total, transaction) => total + transaction.monto, 0);
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Flujo de Caja</h1>
@@ -162,28 +164,34 @@ export default function CashflowPage() {
             {loading ? (
               <LoadingSpinner />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead>Monto</TableHead>
-                    <TableHead>Tipo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedTransactions.map((transaction, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{new Date(transaction.fecha).toLocaleDateString('es-AR')}</TableCell>
-                      <TableCell>{transaction.descripcion}</TableCell>
-                      <TableCell className={transaction.tipo === 'ingreso' ? 'text-green-600' : 'text-red-600'}>
-                        ${Math.abs(transaction.monto)}
-                      </TableCell>
-                      <TableCell>{transaction.tipo}</TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead>Monto</TableHead>
+                      <TableHead>Tipo</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedTransactions.map((transaction, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{new Date(transaction.fecha).toLocaleDateString('es-AR')}</TableCell>
+                        <TableCell>{transaction.descripcion}</TableCell>
+                        <TableCell className={transaction.tipo === 'ingreso' ? 'text-green-600' : 'text-red-600'}>
+                          ${Math.abs(transaction.monto)}
+                        </TableCell>
+                        <TableCell>{transaction.tipo}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {/* Total General */}
+                <div className="mt-4 text-right font-bold">
+                  <p>Total General: <span className={totalGeneral >= 0 ? 'text-green-600' : 'text-red-600'}>${totalGeneral.toFixed(2)}</span></p>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -206,20 +214,19 @@ export default function CashflowPage() {
                   });
                 }
                 return acc;
-              }, [] as { name: string; ingresos: number; egresos: number }[])}>
+              }, [] as { name: string; ingresos: number; egresos: number }[])} >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="ingresos" fill="#4ade80" />
-                <Bar dataKey="egresos" fill="#f87171" />
+                <Bar dataKey="ingresos" fill="#82ca9d" />
+                <Bar dataKey="egresos" fill="#FF4C4C" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
-    
     </div>
   );
 }

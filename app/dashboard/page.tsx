@@ -42,6 +42,7 @@ interface ServicioClienteMasSolicitado {
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [financialData, setFinancialData] = useState<Transaccion[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -96,12 +97,36 @@ export default function DashboardPage() {
   
     fetchServiciosClientesMasSolicitados();
   }, []);
+  useEffect(() => {
+    const fetchTurnos = async () => {
+      if (!date) return; // Si no hay fecha seleccionada, no hacemos nada
+      const turnosSnapshot = await getDocs(collection(db, 'turnos'));
+      const selectedDate = date.toISOString().split('T')[0]; // Fecha seleccionada en formato 'YYYY-MM-DD'
+
+      const turnosData = turnosSnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          cliente: doc.data().cliente,
+          empleado: doc.data().empleado,
+          servicio: doc.data().servicio,
+          fecha: doc.data().fecha.split('T')[0],
+          hora: new Date(doc.data().fecha).toLocaleTimeString('es-AR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }))
+        .filter((turno) => turno.fecha === selectedDate); // Filtrar los turnos que coincidan con la fecha seleccionada
+
+      setTurnos(turnosData);
+    };
+
+    fetchTurnos();
+  }, [date]);
   
 
   // Obtener turnos del día
   useEffect(() => {
     const fetchTurnos = async () => {
-      setLoading(true);
       const turnosSnapshot = await getDocs(collection(db, 'turnos'));
       const today = new Date().toISOString().split('T')[0]; // Fecha de hoy
 
@@ -120,7 +145,6 @@ export default function DashboardPage() {
         .filter((turno) => turno.fecha === today); // Filtra por turnos del día
 
       setTurnos(turnosData);
-      setLoading(false);
     };
 
     fetchTurnos();
@@ -132,47 +156,50 @@ export default function DashboardPage() {
       setLoading(true);
       const turnosSnapshot = await getDocs(collection(db, 'turnos'));
       const pagosSnapshot = await getDocs(collection(db, 'pagos'));
-
+  
       const ingresosData = turnosSnapshot.docs
         .filter((doc) => doc.data().cobrado)
         .map((doc) => ({
           monto: doc.data().monto,
           fecha: new Date(doc.data().fecha),
         }));
-
+  
       const egresosData = pagosSnapshot.docs.map((doc) => ({
         monto: -doc.data().monto,
         fecha: new Date(doc.data().fecha),
       }));
-
-      // Agrupar datos por mes para el gráfico
-      const allData = [...ingresosData, ...egresosData].reduce((acc, transaction) => {
-        const month = transaction.fecha.toLocaleString('es-AR', { month: 'short' });
-        const found = acc.find((item) => item.name === month);
-
-        if (found) {
-          if (transaction.monto > 0) {
-            found.ingresos += transaction.monto;
+  
+      // Unir ingresos y egresos en un solo array y ordenarlos por fecha de más viejo a más actual
+      const allData = [...ingresosData, ...egresosData]
+        .sort((a, b) => a.fecha.getTime() - b.fecha.getTime()) // Ordenar por fecha
+        .reduce((acc, transaction) => {
+          const month = transaction.fecha.toLocaleString('es-AR', { month: 'short' });
+          const found = acc.find((item) => item.name === month);
+  
+          if (found) {
+            if (transaction.monto > 0) {
+              found.ingresos += transaction.monto;
+            } else {
+              found.egresos += Math.abs(transaction.monto);
+            }
           } else {
-            found.egresos += Math.abs(transaction.monto);
+            acc.push({
+              name: month,
+              ingresos: transaction.monto > 0 ? transaction.monto : 0,
+              egresos: transaction.monto < 0 ? Math.abs(transaction.monto) : 0,
+            });
           }
-        } else {
-          acc.push({
-            name: month,
-            ingresos: transaction.monto > 0 ? transaction.monto : 0,
-            egresos: transaction.monto < 0 ? Math.abs(transaction.monto) : 0,
-          });
-        }
-
-        return acc;
-      }, [] as Transaccion[]);
-
+  
+          return acc;
+        }, [] as Transaccion[]);
+  
       setFinancialData(allData);
       setLoading(false);
     };
-
+  
     fetchFinancialData();
   }, []);
+  
 
   // Obtener productos y su stock
   useEffect(() => {
@@ -203,13 +230,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Turnos del día */}
         <Card>
-          <CardHeader>
-            <CardTitle>Turnos del día</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-w-xs mx-auto">
-            <Calendar mode="single" className="rounded-md border" />
-            </div>
+        <CardHeader>
+          <CardTitle>Turnos del día</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-xs mx-auto">
+            <Calendar
+              mode="single"
+              selected={date ?? undefined}
+              onSelect={(selectedDate) => setDate(selectedDate ? new Date(selectedDate) : undefined)}
+              className="rounded-md border"
+            />
+          </div>
+          { turnos.length === 0 ? ( 
+            <h3 className="text-center mt-4">No hay turnos para esta fecha</h3>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -225,13 +260,15 @@ export default function DashboardPage() {
                     <TableCell>{turno.cliente}</TableCell>
                     <TableCell>{turno.empleado}</TableCell>
                     <TableCell>{turno.servicio}</TableCell>
-                    <TableCell>{turno.fecha} {turno.hora}</TableCell>
+                    <TableCell> {turno.hora}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
+
 
         {/* Gráfico de Ingresos y Egresos */}
         <Card>
@@ -245,8 +282,8 @@ export default function DashboardPage() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="ingresos" fill="#8884d8" />
-              <Bar dataKey="egresos" fill="#82ca9d" />
+              <Bar dataKey="ingresos" fill="#82ca9d" />
+              <Bar dataKey="egresos" fill="#FF4C4C" />
             </BarChart>
           </CardContent>
         </Card>
