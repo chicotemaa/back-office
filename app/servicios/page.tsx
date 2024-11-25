@@ -1,5 +1,4 @@
-"use client";
-
+'use client'
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,9 +201,6 @@ export default function ServiciosPage() {
             icon: 'success',
             confirmButtonText: 'OK',
             confirmButtonColor: '#3085d6',
-            customClass: {
-              confirmButton: 'bg-green-500 text-white px-4 py-2 rounded-md', // Estilo personalizado para el botón OK
-            }
           });
         } catch (error) {
           console.error("Error al eliminar el servicio: ", error);
@@ -223,13 +219,17 @@ export default function ServiciosPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Gestión de Servicios</h1>
-      <div className="mb-4">
+
+      <div className="mb-4 flex justify-between items-center">
         <Input
           placeholder="Buscar servicio..."
           value={searchTerm}
           onChange={handleSearchChange}
           className="max-w-sm"
         />
+        <Button color="primary" className="bg-blue-600 text-white" onClick={() => setModalOpen(true)}>
+          Agregar Servicio
+        </Button>
       </div>
 
       {loading ? (
@@ -262,13 +262,22 @@ export default function ServiciosPage() {
                         .join(", ")
                     : "No asignado"}
                 </TableCell>
-
                 <TableCell>{servicio.activo ? "Sí" : "No"}</TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEditServicio(servicio)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mr-2 bg-yellow-500 text-white"
+                    onClick={() => handleEditServicio(servicio)}
+                  >
                     Editar
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteServicio(servicio.id)}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="bg-red-600 text-white"
+                    onClick={() => handleDeleteServicio(servicio.id)}
+                  >
                     Eliminar
                   </Button>
                 </TableCell>
@@ -277,10 +286,6 @@ export default function ServiciosPage() {
           </TableBody>
         </Table>
       )}
-
-      <Button className="mt-4" onClick={() => setModalOpen(true)}>
-        Agregar Servicio
-      </Button>
 
       {/* Modal Integrado */}
       {modalOpen && (
@@ -353,7 +358,7 @@ export default function ServiciosPage() {
               <Button variant="secondary" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={isEditing ? handleSaveChanges : handleAddServicio}>
+              <Button onClick={isEditing ? handleSaveChanges : handleAddServicio} className="bg-green-600 text-white">
                 {isEditing ? "Guardar Cambios" : "Agregar Servicio"}
               </Button>
             </DialogFooter>

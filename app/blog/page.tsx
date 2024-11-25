@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Textarea } from "@/components/ui/textarea";
+import axios from "axios";  // Import axios
 
 // Definición de la interfaz para Blog
 interface Blog {
@@ -44,10 +45,22 @@ export default function BlogPage() {
       setLoading(true);
       try {
         const blogsSnapshot = await getDocs(collection(db, "blogs"));
-        const blogsData = blogsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Blog[];
+        const blogsData = blogsSnapshot.docs.map((doc) => {
+          const data = doc.data();
+  
+          return {
+            id: doc.id,
+            title: data.title || "", // Asegurarse de que las propiedades existen
+            description: data.description || "",
+            publicationDate: data.publicationDate || "", // Mantener como string para cumplir con el tipo Blog
+            isVisible: data.isVisible ?? true, // Asegurar que `isVisible` tiene un valor booleano
+            imageUrl: data.imageUrl || "", // Asegurar que `imageUrl` tiene un valor string o vacío
+          };
+        }) as Blog[];
+  
+        // Ordenar los blogs por la fecha de publicación de más nuevo a más viejo
+        blogsData.sort((a, b) => Date.parse(b.publicationDate) - Date.parse(a.publicationDate));
+  
         setBlogs(blogsData);
       } catch (error) {
         console.error("Error al obtener blogs:", error);
@@ -57,8 +70,11 @@ export default function BlogPage() {
     };
     fetchBlogs();
   }, []);
+  
+  
+  
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>| any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | any) => {
     const { name, value, type, checked } = e.target;
     setNewBlog((prev: any) => ({
       ...prev,
@@ -152,9 +168,44 @@ export default function BlogPage() {
     });
   };
 
+  const generateContentWithAI = async () => {
+    if (newBlog.title.trim() === "") {
+      Swal.fire("Error!", "El título no puede estar vacío.", "error");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/generate', {
+        title: newBlog.title
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.status !== 200) {
+        throw new Error('Error al generar el contenido con IA');
+      }
+
+      setNewBlog((prev: any) => ({
+        ...prev,
+        description: response.data.content
+      }));
+    } catch (error) {
+      console.error("Error al generar contenido con IA: ", error);
+      Swal.fire("Error!", "Hubo un problema al generar el contenido con IA.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Gestión de Blogs</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Blogs</h1>
+
+      <Button className="mb-6 bg-blue-600 text-white hover:bg-blue-700" onClick={() => setModalOpen(true)}>
+        Agregar Blog
+      </Button>
 
       {loading ? (
         <LoadingSpinner />
@@ -184,8 +235,8 @@ export default function BlogPage() {
                     ) : "No disponible"}
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEditBlog(blog)}>Editar</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteBlog(blog.id)}>Eliminar</Button>
+                    <Button variant="outline" size="sm" className="mr-2 bg-yellow-500 text-white hover:bg-yellow-600" onClick={() => handleEditBlog(blog)}>Editar</Button>
+                    <Button variant="outline" size="sm" className="bg-red-600 text-white hover:bg-red-700" onClick={() => handleDeleteBlog(blog.id)}>Eliminar</Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -199,8 +250,6 @@ export default function BlogPage() {
           </TableBody>
         </Table>
       )}
-
-      <Button className="mt-4" onClick={() => setModalOpen(true)}>Agregar Blog</Button>
 
       {/* Modal para agregar/editar blog */}
       {modalOpen && (
@@ -220,12 +269,15 @@ export default function BlogPage() {
                 onChange={handleChange}
                 className="mb-2"
                 />
+                <Button variant="outline" onClick={generateContentWithAI} className="mb-2 bg-green-500 text-white hover:bg-green-600">
+                  Generar con IA
+                </Button>
                 <Textarea
                 placeholder="Descripción"
                 name="description"
                 value={newBlog.description}
                 onChange={handleChange}
-                className="mb-2"
+                className="mb-4"
                 />
                 <Input
                 type="date"
@@ -256,14 +308,13 @@ export default function BlogPage() {
                 <Button variant="secondary" onClick={() => setModalOpen(false)}>
                 Cancelar
                 </Button>
-                <Button onClick={isEditing ? handleSaveChanges : handleAddBlog}>
+                <Button onClick={isEditing ? handleSaveChanges : handleAddBlog} className="bg-blue-600 text-white hover:bg-blue-700">
                 {isEditing ? "Guardar Cambios" : "Agregar Blog"}
                 </Button>
             </DialogFooter>
             </DialogContent>
         </Dialog>
         )}
-
     </div>
   );
 }

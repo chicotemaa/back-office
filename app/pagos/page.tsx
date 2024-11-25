@@ -21,11 +21,108 @@ interface Pago {
   monto: number;
   cajaId: string; 
 }
+interface Empleado {
+  id: string;
+  nombre: string;
+  porcentajeTrabajo: number; // Porcentaje de trabajo pagado
+}
+
+interface Turno {
+  id: string;
+  cajaId: string;
+  cliente: string;
+  cobrado: boolean;
+  empleado: string; // Nombre del empleado
+  fecha: string;
+  monto: number;
+  servicio: string;
+}
+
+
 
 export default function PagosPage() {
   const [cajas, setCajas] = useState<Caja[]>([]);
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [loading, setLoading] = useState(false);
+  const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [turnos, setTurnos] = useState<Turno[]>([]);
+  const [fechaFiltro, setFechaFiltro] = useState('semana'); // Tipo de filtro (semana, mes, año)
+  const [fechaDesde, setFechaDesde] = useState(new Date());
+
+  const obtenerFechaInicio = () => {
+    const hoy = new Date();
+    if (fechaFiltro === 'semana') {
+      hoy.setDate(hoy.getDate() - 7);
+    } else if (fechaFiltro === 'mes') {
+      hoy.setMonth(hoy.getMonth() - 1);
+    } else if (fechaFiltro === 'año') {
+      hoy.setFullYear(hoy.getFullYear() - 1);
+    }
+    return hoy;
+  };
+  const fechaInicio = obtenerFechaInicio();
+  const pagosFiltrados = pagos.filter((pago) => {
+    const fechaPago = new Date(pago.fecha);
+    return fechaPago >= obtenerFechaInicio(); // Filtra por la fecha seleccionada
+  });
+  
+    
+    
+useEffect(() => {
+  const fetchEmpleados = async () => {
+    try {
+      const empleadosSnapshot = await getDocs(collection(db, 'empleados'));
+      const empleadosData = empleadosSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Empleado[];
+      setEmpleados(empleadosData);
+    } catch (error) {
+      console.error('Error al obtener empleados:', error);
+    }
+  };
+  fetchEmpleados();
+}, []);
+
+useEffect(() => {
+  const fetchTurnos = async () => {
+    try {
+      const turnosSnapshot = await getDocs(collection(db, 'turnos'));
+      const turnosData = turnosSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Turno[];
+      setTurnos(turnosData.filter(turno => turno.cobrado)); // Solo turnos cobrados
+    } catch (error) {
+      console.error('Error al obtener turnos:', error);
+    }
+  };
+  fetchTurnos();
+}, []);
+
+
+const calcularPagoPendiente = (empleadoNombre: string): number => {
+  const fechaInicio = obtenerFechaInicio();
+  
+  // Filtra los turnos del empleado usando el nombre y la fecha
+  const turnosEmpleado = turnos.filter((turno) => turno.empleado === empleadoNombre && new Date(turno.fecha) >= fechaInicio);
+  const totalTurnos = turnosEmpleado.reduce((total, turno) => total + turno.monto, 0);
+
+  // Obtén el porcentaje de pago del empleado
+  const empleado = empleados.find((emp) => emp.nombre === empleadoNombre);
+  const porcentajeTrabajo = empleado ? empleado.porcentajeTrabajo : 0;
+
+  // Calcula el monto a pagar según el porcentaje
+  const montoTotal = totalTurnos * (porcentajeTrabajo / 100);
+
+  // Filtra los pagos realizados al empleado usando su nombre y la fecha
+  const pagosEmpleado = pagos.filter((pago) => pago.destinatario === empleadoNombre && new Date(pago.fecha) >= fechaInicio);
+  const totalPagosRealizados = pagosEmpleado.reduce((total, pago) => total + pago.monto, 0);
+
+  // Devuelve el saldo pendiente
+  return montoTotal - totalPagosRealizados;
+};
+
 
   // Obtener la fecha actual sin hora
   const today = new Date().toISOString().split('T')[0]; // Fecha actual en formato 'YYYY-MM-DD'
@@ -251,11 +348,125 @@ export default function PagosPage() {
       }
     });
   };
+  const handlePagarEmpleado = async (empleado: Empleado, saldoPendiente: number) => {
+    const { value: formValues } = await Swal.fire({
+      title: `Pagar a ${empleado.nombre}`,
+      html:
+        `<input id="swal-input1" class="swal2-input" type="number" placeholder="Monto a pagar" min="1" max="${saldoPendiente.toFixed(2)}" step="0.01">` +
+        `<select id="swal-input2" class="swal2-input bg-white border border-gray-300">
+          ${cajas.map((caja) => `<option value="${caja.id}">${caja.nombre}</option>`).join('')}
+        </select>`,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Pagar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: 'green',
+      cancelButtonColor: 'red',
+      preConfirm: () => {
+        const montoPago = (document.getElementById('swal-input1') as HTMLInputElement).value;
+        const cajaId = (document.getElementById('swal-input2') as HTMLSelectElement).value;
+        return { montoPago, cajaId };
+      }
+    });
+  
+    if (formValues && parseFloat(formValues.montoPago) > 0) {
+      setLoading(true);
+      try {
+        const newPago = {
+          tipo: 'empleado' as const,
+          destinatario: empleado.nombre,
+          fecha: today,
+          monto: parseFloat(formValues.montoPago),
+          cajaId: formValues.cajaId, // Caja seleccionada por el usuario
+        };
+        const docRef = await addDoc(collection(db, 'pagos'), newPago);
+        setPagos([...pagos, { id: docRef.id, ...newPago }]);
+  
+        Swal.fire({
+          title: 'Éxito',
+          text: 'El pago ha sido registrado correctamente',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: 'green',
+        });
+      } catch (error) {
+        console.error('Error al realizar el pago:', error);
+        Swal.fire('Error', 'Hubo un problema al realizar el pago', 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+  
+  
 
   return (
     <div>
+                <div className="flex items-center mb-4">
+            <label className="mr-2">Filtrar por:</label>
+            <select
+              value={fechaFiltro}
+              onChange={(e) => setFechaFiltro(e.target.value)}
+              className="border border-gray-300 rounded p-1"
+            >
+              <option value="semana">Última Semana</option>
+              <option value="mes">Último Mes</option>
+              <option value="año">Último Año</option>
+            </select>
+          </div>
+           <Button className="mt-4 mb-4" onClick={handleAddPago}>Agregar Pago</Button>
+
+              <h2 className="text-xl font-bold mt-6 mb-4">Pagos Pendientes a Empleados</h2>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Total Turnos</TableHead>
+              <TableHead>Porcentaje de Pago</TableHead>
+              <TableHead>Total a Pagar</TableHead>
+              <TableHead>Pagado</TableHead>
+              <TableHead>Pendiente</TableHead>
+              <TableHead>Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+          {empleados.map((empleado) => {
+            const saldoPendiente = calcularPagoPendiente(empleado.nombre); // Usa la función aquí
+
+            const totalTurnos = turnos
+              .filter((turno) => turno.empleado === empleado.nombre)
+              .reduce((total, turno) => total + turno.monto, 0);
+
+            const totalAPagar = totalTurnos * (empleado.porcentajeTrabajo / 100);
+            const totalPagado = totalAPagar - saldoPendiente; // Deducimos el saldo pendiente para obtener lo pagado
+
+            return (
+              <TableRow key={empleado.id}>
+                <TableCell>{empleado.nombre}</TableCell>
+                <TableCell>${totalTurnos.toFixed(2)}</TableCell>
+                <TableCell>{empleado.porcentajeTrabajo}%</TableCell>
+                <TableCell>${totalAPagar.toFixed(2)}</TableCell>
+                <TableCell>${totalPagado.toFixed(2)}</TableCell>
+                <TableCell>${saldoPendiente.toFixed(2)}</TableCell>
+                <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePagarEmpleado(empleado, saldoPendiente)}
+                      disabled={saldoPendiente <= 0} // Deshabilitar si no hay saldo pendiente
+                    >
+                      Pagar
+                    </Button>
+                  </TableCell>
+
+              </TableRow>
+            );
+          })}
+        </TableBody>
+
+        </Table>
+
       <h1 className="text-2xl font-bold mb-4">Lista de Pagos Realizados</h1>
-      <Button className="mt-4 mb-4" onClick={handleAddPago}>Agregar Pago</Button>
       {loading ? (
         <LoadingSpinner />
       ) : (

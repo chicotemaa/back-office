@@ -28,7 +28,7 @@ export default function ClientesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newCliente, setNewCliente] = useState<Cliente|any>({
+  const [newCliente, setNewCliente] = useState<Cliente | any>({
     nombre: '',
     email: '',
     telefono: '',
@@ -146,7 +146,27 @@ export default function ClientesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Gestión de Clientes</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Gestión de Clientes</h1>
+        <Button
+          className="bg-blue-500 text-white hover:bg-blue-600"
+          onClick={() => {
+            setNewCliente({
+              nombre: '',
+              email: '',
+              telefono: '',
+              direccion: '',
+              fechaNacimiento: '',
+              nota: ''
+            });
+            setIsEditing(false);
+            setModalOpen(true);
+          }}
+        >
+          Agregar Cliente
+        </Button>
+      </div>
+
       <div className="mb-4">
         <Input
           placeholder="Buscar cliente..."
@@ -180,8 +200,22 @@ export default function ClientesPage() {
                   <TableCell>{cliente.direccion || 'No disponible'}</TableCell>
                   <TableCell>{cliente.fechaNacimiento || 'No disponible'}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" className="mr-2" onClick={() => handleEditCliente(cliente)}>Editar</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteCliente(cliente.id)}>Eliminar</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mr-2 bg-yellow-500 text-white hover:bg-yellow-600"
+                      onClick={() => handleEditCliente(cliente)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-red-500 text-white hover:bg-red-600"
+                      onClick={() => handleDeleteCliente(cliente.id)}
+                    >
+                      Eliminar
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -195,8 +229,6 @@ export default function ClientesPage() {
           </TableBody>
         </Table>
       )}
-
-      <Button className="mt-4" onClick={() => setModalOpen(true)}>Agregar Cliente</Button>
 
       {/* Modal Integrado */}
       {modalOpen && (
@@ -256,8 +288,12 @@ export default function ClientesPage() {
               <Button variant="secondary" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={isEditing ? handleSaveChanges : handleAddCliente}>
-                {isEditing ? "Guardar Cambios" : "Agregar Cliente"}
+              <Button
+                onClick={isEditing ? handleSaveChanges : handleAddCliente}
+                disabled={loading}
+                className="bg-blue-500 text-white hover:bg-blue-600"
+              >
+                {loading ? 'Procesando...' : isEditing ? 'Guardar Cambios' : 'Agregar Cliente'}
               </Button>
             </DialogFooter>
           </DialogContent>
