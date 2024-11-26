@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-export async function POST(req: { json: () => any; }) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { title } = body;
