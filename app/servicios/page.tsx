@@ -39,6 +39,7 @@ export default function ServiciosPage() {
     descripcion: "",
     empleados: [] as string[], // Empleados que pueden brindar el servicio
     activo: true, // Estado por defecto activo
+    id:""
   });
 
   // Obtener servicios y empleados de Firebase
